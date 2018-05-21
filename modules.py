@@ -97,19 +97,15 @@ class ConvNet(nn.Module):
         self.conv1 = nn.Conv2d(num_channel, 8, kernel_size=3, padding=1)
         self.bn2 = nn.BatchNorm2d(8)
         self.conv2 = nn.Conv2d(8, 16, kernel_size=3, padding=1)
-        self.bn3 = nn.BatchNorm2d(16)
-        self.conv3 = nn.Conv2d(16, 32, kernel_size=2, padding=0)
+        self.bnfc = nn.BatchNorm(48)
         self.drop = nn.Dropout(p=0.2)
-        self.bnfc = nn.BatchNorm1d(32)
-        self.fc1 = nn.Linear(32, hidden_g)
+        self.fc1 = nn.Linear(48, hidden_g)
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(self.bn1(x)), 2))
         x = self.drop(x)
         x = F.relu(F.max_pool2d(self.conv2(self.bn2(x)), 2))
-        x = self.drop(x)
-        x = F.relu(self.conv3(self.bn3(x)))
-        x = x.view(-1, 32)
+        x = x.view(-1, 48)
         x = self.drop(x)
         x = self.fc1(self.bnfc(x))
         return x
