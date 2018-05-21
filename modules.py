@@ -128,10 +128,10 @@ class GlimpseNet(nn.Module):
         self.flatten = not conv
         # glimpse layer
         if conv:
-            self.model = ConvNet(num_channel*num_patches, hidden_g)
+            self.fc1 = ConvNet(num_channel*num_patches, hidden_g)
         else:
             D_in = num_patches*patch_size*patch_size*num_channel
-            self.model = nn.Linear(D_in, hidden_g)
+            self.fc1 = nn.Linear(D_in, hidden_g)
 
         # location layer
         self.fc2 = nn.Linear(2, hidden_l)
@@ -149,7 +149,7 @@ class GlimpseNet(nn.Module):
         """
         glimpse = self.retina.foveate(x_t, l_t, flatten=self.flatten)
 
-        what = self.fc3(F.relu(self.model(glimpse)))
+        what = self.fc3(F.relu(self.fc1(glimpse)))
         where = self.fc4(F.relu(self.fc2(l_t)))
 
         g = F.relu(what + where)
@@ -187,7 +187,7 @@ class core_network(nn.Module):
     - h_t: a 2D tensor of shape (B, rnn_hidden). The hidden
       state vector for the current timestep `t`.
     """
-    def __init__(self, input_size, rnn_hidden, use_gpu, rnn_type):
+    def __init__(self, input_size, rnn_hidden, use_gpu):
         super(core_network, self).__init__()
         self.input_size = input_size
         self.rnn_hidden = rnn_hidden

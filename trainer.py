@@ -41,7 +41,7 @@ class Trainer(object):
         Train the model for 1 epoch of the training set.
         """
         epoch_log = {name: AverageMeter() for name in self.watch}
-
+        self.model.train()
         for i, (x, y) in enumerate(tqdm(train_loader, unit='batch', desc='Epoch {:>3}'.format(epoch))):
             metric = self.model.forward(x, y, is_training=True)
             loss = metric['loss']
@@ -62,7 +62,7 @@ class Trainer(object):
         Evaluate the model on the validation set.
         """
         val_log = {name: AverageMeter() for name in self.watch}
-
+        self.model.eval()
         for i, (x, y) in enumerate(tqdm(val_loader, unit='batch', desc='Epoch {:>3}'.format(epoch))):
             # metric = self.model.forward(x, y, is_training=False)
             metric = self.model.forward(x, y, is_training=False)
@@ -81,7 +81,7 @@ class Trainer(object):
         # self.load_checkpoint(best=best)
 
         accs = AverageMeter()
-
+        self.model.eval()
         for i, (x, y) in enumerate(tqdm(test_loader, unit='batch')):
             metric = self.model.forward(x, y)
             acc = metric['acc']
