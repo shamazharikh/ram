@@ -99,15 +99,18 @@ class ConvNet(nn.Module):
         self.conv2 = nn.Conv2d(8, 16, kernel_size=3, padding=1)
         self.bn3 = nn.BatchNorm2d(16)
         self.conv3 = nn.Conv2d(16, 32, kernel_size=2, padding=0)
-        self.conv2_drop = nn.Dropout2d()
+        self.drop = nn.Dropout(p=0.2)
         self.bnfc = nn.BatchNorm1d(32)
         self.fc1 = nn.Linear(32, hidden_g)
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(self.bn1(x)), 2))
+        x = self.drop(x)
         x = F.relu(F.max_pool2d(self.conv2(self.bn2(x)), 2))
+        x = self.drop(x)
         x = F.relu(self.conv3(self.bn3(x)))
         x = x.view(-1, 32)
+        x = self.drop(x)
         x = self.fc1(self.bnfc(x))
         return x
 
@@ -187,7 +190,7 @@ class core_network(nn.Module):
     - h_t: a 2D tensor of shape (B, rnn_hidden). The hidden
       state vector for the current timestep `t`.
     """
-    def __init__(self, input_size, rnn_hidden, use_gpu, rnn_type):
+    def __init__(self, input_size, rnn_hidden, use_gpu):
         super(core_network, self).__init__()
         self.input_size = input_size
         self.rnn_hidden = rnn_hidden
