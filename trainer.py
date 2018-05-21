@@ -65,7 +65,7 @@ class Trainer(object):
 
         for i, (x, y) in enumerate(tqdm(val_loader, unit='batch', desc='Epoch {:>3}'.format(epoch))):
             # metric = self.model.forward(x, y, is_training=False)
-            metric = self.model.forward(x, y)
+            metric = self.model.forward(x, y, is_training=False)
             for name, avg in val_log.items():
                 val_log[name].update(metric[name].data[0], x.size()[0])
 

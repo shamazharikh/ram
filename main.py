@@ -26,7 +26,7 @@ def parse_args():
     glimpse_arg.add_argument('--glimpse_hidden', type=int, default=128, help='hidden size of glimpse fc')
     glimpse_arg.add_argument('--loc_hidden', type=int, default=128, help='hidden size of loc fc')
     glimpse_arg.add_argument('--patch_size', type=int, default=8, help='size of extracted patch at highest res')
-    glimpse_arg.add_argument('--num_patches', type=int, default=2, help='# of downscaled patches per glimpse')
+    glimpse_arg.add_argument('--num_patches', type=int, default=1, help='# of downscaled patches per glimpse')
     glimpse_arg.add_argument('--glimpse_scale', type=int, default=2, help='scale of successive patches')
 
     # LocationNet params
@@ -56,10 +56,11 @@ def parse_args():
     # other params
     misc_arg = parser.add_argument_group('Misc.')
     misc_arg.add_argument('--use_gpu', type=str2bool, default=True, help="Whether to run on the GPU")
+    misc_arg.add_argument('--device', type=int, default=1, help="GPU device to use")
     misc_arg.add_argument('--best', type=str2bool, default=True, help='Load best model or most recent for testing')
     misc_arg.add_argument('--random_seed', type=int, default=1, help='Seed to ensure reproducibility')
     misc_arg.add_argument('--data_dir', default='./data', help='Directory in which data is stored')
-    misc_arg.add_argument('--ckpt_dir', default='./ckpt/fc_model', help='Directory in which to save model checkpoints')
+    misc_arg.add_argument('--ckpt_dir', default='./ckpt/conv_model', help='Directory in which to save model checkpoints')
     misc_arg.add_argument('--log_dir', default='./logs/', help='Directory in which Tensorboard logs wil be stored')
     misc_arg.add_argument('--use_tensorboard', type=str2bool, default=False, help='Whether to use tensorboard for visualization')
     misc_arg.add_argument('--resume', type=str2bool, default=False, help='Whether to resume training from checkpoint')
@@ -98,6 +99,7 @@ if __name__ == '__main__':
     np.random.seed(args.random_seed)
     kwargs = {}
     if args.use_gpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.device)
         torch.cuda.manual_seed(args.random_seed)
         kwargs = {'num_workers': 1, 'pin_memory': True}
 

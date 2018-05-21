@@ -47,8 +47,7 @@ class retina(object):
 
         # concatenate into a single tensor and flatten
         patches = torch.cat(patches, 1)
-        # print(patches.shape)
-        # assert False
+
         if flatten:
             patches = patches.view(patches.shape[0], -1)
 
@@ -91,9 +90,29 @@ class retina(object):
 
         return torch.cat(patch)
 
+class ConvNet(nn.Module):
+    def __init__(self, num_channel, hidden_g):
+        super(ConvNet, self).__init__()
+        self.bn1 = nn.BatchNorm2d(num_channel)
+        self.conv1 = nn.Conv2d(num_channel, 8, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(8)
+        self.conv2 = nn.Conv2d(8, 16, kernel_size=3, padding=1)
+        self.bn3 = nn.BatchNorm2d(16)
+        self.conv3 = nn.Conv2d(16, 32, kernel_size=2, padding=0)
+        self.conv2_drop = nn.Dropout2d()
+        self.bnfc = nn.BatchNorm1d(32)
+        self.fc1 = nn.Linear(32, hidden_g)
+
+    def forward(self, x):
+        x = F.relu(F.max_pool2d(self.conv1(self.bn1(x)), 2))
+        x = F.relu(F.max_pool2d(self.conv2(self.bn2(x)), 2))
+        x = F.relu(self.conv3(self.bn3(x)))
+        x = x.view(-1, 32)
+        x = self.fc1(self.bnfc(x))
+        return x
 
 class GlimpseNet(nn.Module):
-    def __init__(self, hidden_g, hidden_l, patch_size, num_patches, scale, num_channel, use_gpu):
+    def __init__(self, hidden_g, hidden_l, patch_size, num_patches, scale, num_channel, use_gpu, conv):
         """
         @param hidden_g: hidden layer size of the fc layer for `phi`.
         @param hidden_l: hidden layer size of the fc layer for `l`.
@@ -105,10 +124,14 @@ class GlimpseNet(nn.Module):
         """
         super(GlimpseNet, self).__init__()
         self.retina = retina(patch_size, num_patches, scale, use_gpu)
-
+        
+        self.flatten = not conv
         # glimpse layer
-        D_in = num_patches*patch_size*patch_size*num_channel
-        self.fc1 = nn.Linear(D_in, hidden_g)
+        if conv:
+            self.model = ConvNet(num_channel*num_patches, hidden_g)
+        else:
+            D_in = num_patches*patch_size*patch_size*num_channel
+            self.model = nn.Linear(D_in, hidden_g)
 
         # location layer
         self.fc2 = nn.Linear(2, hidden_l)
@@ -124,9 +147,9 @@ class GlimpseNet(nn.Module):
         @param l_t: (batch, 2)
         @return output: (batch, hidden_g+hidden_l)
         """
-        glimpse = self.retina.foveate(x_t, l_t)
+        glimpse = self.retina.foveate(x_t, l_t, flatten=self.flatten)
 
-        what = self.fc3(F.relu(self.fc1(glimpse)))
+        what = self.fc3(F.relu(self.model(glimpse)))
         where = self.fc4(F.relu(self.fc2(l_t)))
 
         g = F.relu(what + where)
@@ -164,7 +187,7 @@ class core_network(nn.Module):
     - h_t: a 2D tensor of shape (B, rnn_hidden). The hidden
       state vector for the current timestep `t`.
     """
-    def __init__(self, input_size, rnn_hidden, use_gpu):
+    def __init__(self, input_size, rnn_hidden, use_gpu, rnn_type):
         super(core_network, self).__init__()
         self.input_size = input_size
         self.rnn_hidden = rnn_hidden
@@ -296,7 +319,7 @@ class RAMNet(nn.Module):
         self.num_glimpses = args.num_glimpses
         self.std = args.std
 
-        self.glimpse_net = GlimpseNet(args.glimpse_hidden, args.loc_hidden, args.patch_size, args.num_patches, args.glimpse_scale, args.num_channels, args.use_gpu)
+        self.glimpse_net = GlimpseNet(args.glimpse_hidden, args.loc_hidden, args.patch_size, args.num_patches, args.glimpse_scale, args.num_channels, args.use_gpu, args.conv)
         self.rnn = core_network(rnn_inp_size, args.rnn_hidden, args.use_gpu)
         self.location_net = LocationNet(args.rnn_hidden, 2, args.std)
         self.classifier = ActionNet(args.rnn_hidden, args.num_class)

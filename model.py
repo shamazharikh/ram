@@ -34,7 +34,7 @@ class RecurrentAttention(nn.Module):
         """
         if self.use_gpu:
             x, y = x.cuda(), y.cuda()
-        x, y = Variable(x), Variable(y)
+        x, y = Variable(x, volatile=not is_training), Variable(y, volatile=not is_training)
 
         if not is_training:
             return self.forward_test(x, y)
