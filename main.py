@@ -4,8 +4,9 @@ import os
 import numpy as np
 import argparse
 from trainer import Trainer
-from data_loader import get_MNIST_test_dataset, get_MNIST_train_val_dataset
+# from data_loader import get_MNIST_test_dataset, get_MNIST_train_val_dataset
 from data_loader import get_test_loader, get_train_val_loader
+from folder import ImageFolder
 from model import RecurrentAttention
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from callbacks import PlotCbk, ModelCheckpoint, LearningRateScheduler, EarlyStopping
@@ -23,6 +24,7 @@ def parse_args():
     parser.add_argument('--M', type=float, default=10, help='Monte Carlo sampling for valid and test sets')
     glimpse_arg = parser.add_argument_group('GlimpseNet Params')
     glimpse_arg.add_argument('--conv', type=str2bool, default=False, help='Use convolutional model')
+    glimpse_arg.add_argument('--model', type=str, default='vanilla', help='Convolutional model to use. One of {"vanilla", "resnetX", "densenetX"}.')
     glimpse_arg.add_argument('--glimpse_hidden', type=int, default=128, help='hidden size of glimpse fc')
     glimpse_arg.add_argument('--loc_hidden', type=int, default=128, help='hidden size of loc fc')
     glimpse_arg.add_argument('--patch_size', type=int, default=8, help='size of extracted patch at highest res')
@@ -46,8 +48,8 @@ def parse_args():
     train_arg = parser.add_argument_group('Training Params')
     train_arg.add_argument('--is_train', type=str2bool, default=True, help='Whether to train or test the model')
     train_arg.add_argument('--batch_size', type=int, default=32, help='# of images in each batch of data')
-    train_arg.add_argument('--epochs', type=int, default=200, help='# of epochs to train for')
-    train_arg.add_argument('--patience', type=int, default=100, help='Max # of epochs to wait for no validation improv')
+    train_arg.add_argument('--epochs', type=int, default=25, help='# of epochs to train for')
+    train_arg.add_argument('--patience', type=int, default=5, help='Max # of epochs to wait for no validation improv')
 
     train_arg.add_argument('--momentum', type=float, default=0.5, help='Nesterov momentum value')
     train_arg.add_argument('--init_lr', type=float, default=0.001, help='Initial learning rate value')
@@ -98,13 +100,28 @@ if __name__ == '__main__':
     random.seed(args.random_seed)
     np.random.seed(args.random_seed)
     kwargs = {}
+
+    normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+
+    transformList = []
+    transformList.append(transforms.Resize(transResize))
+    transformList.append(transforms.CenterCrop(transCrop))
+    transformList.append(transforms.RandomHorizontalFlip())
+    transformList.append(transforms.ToTensor())
+    transformList.append(normalize)      
+    transformSequence=transforms.Compose(transformList)
+
+
+
     if args.use_gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.device)
         torch.cuda.manual_seed(args.random_seed)
-        kwargs = {'num_workers': 1, 'pin_memory': True}
+        kwargs = {'num_workers': 4, 'pin_memory': True}
 
     if args.is_train:
-        train_dataset, val_dataset = get_MNIST_train_val_dataset(args.data_dir)
+
+        train_dataset = ImageFolder(os.path.join(args.data_dir,'train'), transformSequence)
+        val_dataset = ImageFolder(os.path.join(args.data_dir,'valid'), transformSequence)
         # train_dataset, val_dataset = get_MNIST_train_val_dataset('./data/MNIST')
         train_loader, val_loader = get_train_val_loader(
             train_dataset, val_dataset,
@@ -117,7 +134,7 @@ if __name__ == '__main__':
         args.num_channels = train_loader.dataset.num_channels
 
     else:
-        test_dataset = get_MNIST_test_dataset(args.data_dir)
+        test_dataset = ImageFolder(os.path.join(args.data_dir,'test'), transformSequence)
         test_loader = get_test_loader(test_dataset, args.batch_size, **kwargs)
         args.num_class = test_loader.dataset.num_class
         args.num_channels = test_loader.dataset.num_channels
@@ -126,7 +143,8 @@ if __name__ == '__main__':
     model = RecurrentAttention(args)
     if args.use_gpu:
         model.cuda()
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.init_lr, momentum=args.momentum)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=args.init_lr, momentum=args.momentum)
+    optimizer = torch.optim.Adam (model.parameters(), lr=0.0001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-5)
 
     logger.info('Number of model parameters: {:,}'.format(
         sum([p.data.nelement() for p in model.parameters()])))
@@ -145,7 +163,8 @@ if __name__ == '__main__':
                           PlotCbk(model, args.plot_num_imgs, args.plot_freq, args.use_gpu),
                           # TensorBoard(model, args.log_dir),
                           ModelCheckpoint(model, optimizer, args.ckpt_dir),
-                          LearningRateScheduler(ReduceLROnPlateau(optimizer, 'min'), 'val_loss'),
+                          # LearningRateScheduler(ReduceLROnPlateau(optimizer, 'min'), 'val_loss'),
+                          LearningRateScheduler(ReduceLROnPlateau(optimizer, factor = 0.1, patience = 5, mode = 'min'), 'val_loss'),
                           EarlyStopping(model, patience=args.patience)
                       ])
     else:

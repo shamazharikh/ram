@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.distributions import Normal
 
 from torch.autograd import Variable
-
+import torchvision.models as models
 import numpy as np
 
 
@@ -97,21 +97,47 @@ class ConvNet(nn.Module):
         self.conv1 = nn.Conv2d(num_channel, 8, kernel_size=3, padding=1)
         self.bn2 = nn.BatchNorm2d(8)
         self.conv2 = nn.Conv2d(8, 16, kernel_size=3, padding=1)
-        self.bnfc = nn.BatchNorm(48)
+        self.bnfc = nn.BatchNorm1d(64)
         self.drop = nn.Dropout(p=0.2)
-        self.fc1 = nn.Linear(48, hidden_g)
+        self.fc1 = nn.Linear(64, hidden_g)
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(self.bn1(x)), 2))
         x = self.drop(x)
         x = F.relu(F.max_pool2d(self.conv2(self.bn2(x)), 2))
-        x = x.view(-1, 48)
+        x = x.view(-1, 64)
         x = self.drop(x)
         x = self.fc1(self.bnfc(x))
         return x
 
+class PreTrainedNet(nn.Module):
+    def __init__(self, num_channel, hidden_g, net='resnet18'):
+        super(PreTrainedNet, self).__init__()
+        data = Variable(torch.rand(2,3,32,32))
+        self.bn1 = nn.BatchNorm2d(num_channel)
+        self.conv1 = nn.Conv2d(num_channel, 3, kernel_size=3, padding=1)
+        if 'resnet' in net:
+            model = getattr(models, net)(pretrained=True)
+            self.feature = nn.Sequential(*list(model.children())[:-3])
+        if 'densenet' in net:
+            model = getattr(models, net)(pretrained=True)
+            self.feature = nn.Sequential(*list(model.features.children())[:-3])
+        self.pooler = nn.AvgPool2d(2)
+        out = self.pooler(self.feature(data))
+        shape = out.size()[1]
+        self.fc = nn.Linear(shape, hidden_g)
+        self.bnfc = nn.BatchNorm1d(shape)
+    def forward(self, x):
+        x = F.relu(self.conv1(self.bn1(x)))
+        x = self.feature(x)
+        x = self.pooler(x)
+        shape = x.size()[1]
+        x = x.view(-1, shape)
+        x = self.fc(self.bnfc(x))
+        return x
+
 class GlimpseNet(nn.Module):
-    def __init__(self, hidden_g, hidden_l, patch_size, num_patches, scale, num_channel, use_gpu, conv):
+    def __init__(self, hidden_g, hidden_l, patch_size, num_patches, scale, num_channel, use_gpu, conv, model):
         """
         @param hidden_g: hidden layer size of the fc layer for `phi`.
         @param hidden_l: hidden layer size of the fc layer for `l`.
@@ -127,7 +153,10 @@ class GlimpseNet(nn.Module):
         self.flatten = not conv
         # glimpse layer
         if conv:
-            self.fc1 = ConvNet(num_channel*num_patches, hidden_g)
+            if model == 'vanilla':
+                self.fc1 = ConvNet(num_channel*num_patches, hidden_g)
+            else:
+                self.fc1 = PreTrainedNet(num_channel*num_patches, hidden_g, net=model)
         else:
             D_in = num_patches*patch_size*patch_size*num_channel
             self.fc1 = nn.Linear(D_in, hidden_g)
@@ -186,19 +215,19 @@ class core_network(nn.Module):
     - h_t: a 2D tensor of shape (B, rnn_hidden). The hidden
       state vector for the current timestep `t`.
     """
-    def __init__(self, input_size, rnn_hidden, use_gpu):
+    def __init__(self, input_size, rnn_hidden, use_gpu, rnn_type='RNN'):
         super(core_network, self).__init__()
         self.input_size = input_size
         self.rnn_hidden = rnn_hidden
         self.use_gpu = use_gpu
-
-        self.i2h = nn.Linear(input_size, rnn_hidden)
-        self.h2h = nn.Linear(rnn_hidden, rnn_hidden)
-
+        self.rnn_type = rnn_type
+        if rnn_type=='RNN':
+            self.rnn = nn.RNNCell(input_size, rnn_hidden, bias=True, nonlinearity='relu')
+        if rnn_type=='LSTM':
+            self.rnn = nn.LSTMCell(input_size, rnn_hidden, bias=True)
+    
     def forward(self, g_t, h_t_prev):
-        h1 = self.i2h(g_t)
-        h2 = self.h2h(h_t_prev)
-        h_t = F.relu(h1 + h2)
+        h_t = self.rnn(g_t, h_t_prev)
         return h_t
 
     def init_hidden(self, batch_size, use_gpu=False):
@@ -210,9 +239,15 @@ class core_network(nn.Module):
         `x` is introduced.
         """
         dtype = torch.cuda.FloatTensor if self.use_gpu else torch.FloatTensor
-        h_t = torch.zeros(batch_size, self.rnn_hidden)
-        h_t = Variable(h_t).type(dtype)
-
+        if self.rnn_type == 'RNN':
+            h_t = torch.zeros(batch_size, self.rnn_hidden)
+            h_t = Variable(h_t).type(dtype)
+        elif self.rnn_type == 'LSTM':
+            h = torch.zeros(batch_size, self.rnn_hidden)
+            h = Variable(h).type(dtype)
+            c = torch.zeros(batch_size, self.rnn_hidden)
+            c = Variable(c).type(dtype)
+            h_t = (h, c)
         return h_t
 
 
@@ -318,7 +353,7 @@ class RAMNet(nn.Module):
         self.num_glimpses = args.num_glimpses
         self.std = args.std
 
-        self.glimpse_net = GlimpseNet(args.glimpse_hidden, args.loc_hidden, args.patch_size, args.num_patches, args.glimpse_scale, args.num_channels, args.use_gpu, args.conv)
+        self.glimpse_net = GlimpseNet(args.glimpse_hidden, args.loc_hidden, args.patch_size, args.num_patches, args.glimpse_scale, args.num_channels, args.use_gpu, args.conv, args.model)
         self.rnn = core_network(rnn_inp_size, args.rnn_hidden, args.use_gpu)
         self.location_net = LocationNet(args.rnn_hidden, 2, args.std)
         self.classifier = ActionNet(args.rnn_hidden, args.num_class)
