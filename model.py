@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 from modules import RAMNet
 
-
 class RecurrentAttention(nn.Module):
     def __init__(self, args):
         """
