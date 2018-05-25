@@ -77,6 +77,7 @@ def parse_args():
 	misc_arg.add_argument('--random_seed', type=int, default=1, help='Seed to ensure reproducibility')
 	misc_arg.add_argument('--data_dir', default='./data', help='Directory in which data is stored')
 	misc_arg.add_argument('--ckpt_dir', default='./ckpt/conv_model', help='Directory in which to save model checkpoints')
+	misc_arg.add_argument('--plot_dir', default='./plots/conv_model', help='Directory in which to save model checkpoints')
 	misc_arg.add_argument('--log_dir', default='./logs/', help='Directory in which Tensorboard logs wil be stored')
 	misc_arg.add_argument('--use_tensorboard', type=str2bool, default=False, help='Whether to use tensorboard for visualization')
 	misc_arg.add_argument('--resume', type=str2bool, default=False, help='Whether to resume training from checkpoint')
@@ -217,7 +218,7 @@ if __name__ == '__main__':
 					  start_epoch=start_epoch,
 					  epochs=args.epochs,
 					  callbacks=[
-						  PlotCbk(model, args.plot_num_imgs, args.plot_freq, args.use_gpu),
+						  PlotCbk(args.plot_dir, model, args.plot_num_imgs, args.plot_freq, args.use_gpu),
 						  # TensorBoard(model, args.log_dir),
 						  ModelCheckpoint(model, optimizer, args.ckpt_dir),
 						  # LearningRateScheduler(ReduceLROnPlateau(optimizer, 'min'), 'val_loss'),

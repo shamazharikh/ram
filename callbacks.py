@@ -31,12 +31,12 @@ class Callback(object):
 
 
 class PlotCbk(Callback):
-    def __init__(self, model, num_imgs, plot_freq, use_gpu):
+    def __init__(self, plot_dir, model, num_imgs, plot_freq, use_gpu):
         self.model = model
         self.num_imgs = num_imgs
         self.plot_freq = plot_freq
         self.use_gpu = use_gpu
-        self.plot_dir = './plots/' + self.model.name + '/'
+        self.plot_dir = os.path.join(plot_dir, self.model.name, '/')
         if not os.path.exists(self.plot_dir):
             os.makedirs(self.plot_dir)
 

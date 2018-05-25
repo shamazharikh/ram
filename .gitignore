@@ -1,5 +1,6 @@
 *.p
 *.mp4
+plots/
 data/processed/
 data/raw/
 logs/
