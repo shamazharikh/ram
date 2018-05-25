@@ -40,25 +40,42 @@ class PlotCbk(Callback):
         if not os.path.exists(self.plot_dir):
             os.makedirs(self.plot_dir)
 
-    def on_batch_end(self, epoch, batch_ind, logs={}):
+    def on_batch_end(self, epoch, batch_ind, name='',logs={}):
         imgs = logs['x'][:self.num_imgs].squeeze(1)
         locs = [loc[:self.num_imgs] for loc in logs['locs']]
+        preds = logs['preds'][:self.num_imgs] 
+        Ys = logs['y'][:self.num_imgs]
         if (epoch % self.plot_freq == 0) and (batch_ind == 0):
             if self.use_gpu:
                 imgs = imgs.cpu()
                 locs = [l.cpu() for l in locs]
-
+                preds = preds.cpu()
+                Ys = Ys.cpu()
             imgs = imgs.data.numpy()
             locs = [l.data.numpy() for l in locs]
+            preds = preds.data.numpy()
+            Ys = Ys.data.numpy()
             pickle.dump(
                 imgs, open(
-                    self.plot_dir + "g_{}.p".format(epoch),
+                    self.plot_dir + "{}g_{}.p".format(name, epoch),
+                    "wb"
+                )
+            )
+            pickle.dump(
+                preds, open(
+                    self.plot_dir + "{}preds_{}.p".format(name, epoch),
+                    "wb"
+                )
+            )
+            pickle.dump(
+                Ys, open(
+                    self.plot_dir + "{}Ys_{}.p".format(name, epoch),
                     "wb"
                 )
             )
             pickle.dump(
                 locs, open(
-                    self.plot_dir + "l_{}.p".format(epoch),
+                    self.plot_dir + "{}l_{}.p".format(name, epoch),
                     "wb"
                 )
             )
@@ -122,8 +139,7 @@ class EarlyStopping(Callback):
         @param verbose: verbosity mode, 0 or 1.
         @param mode: one of {auto, min, max}. Decides if the monitored quantity improves. If set to `max`, increase of the quantity indicates improvement, and vice versa. If set to 'auto', behaves like 'max' if `monitor` contains substring 'acc'. Otherwise, behaves like 'min'.
         '''
-        super(Callback, self).__init__()
-
+        super(EarlyStopping, self).__init__(model)
         self.monitor = monitor
         self.patience = patience
         self.verbose = verbose

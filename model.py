@@ -4,7 +4,10 @@ import torch.nn.functional as F
 import torch
 import torch.nn as nn
 from modules import RAMNet
-
+import torchnet as tnt
+nclasses=3
+confusion_meter = tnt.meter.ConfusionMeter(nclasses, normalized=True)
+confusion_meter.reset()
 class RecurrentAttention(nn.Module):
     def __init__(self, args):
         """
@@ -18,7 +21,7 @@ class RecurrentAttention(nn.Module):
         self.num_glimpses = args.num_glimpses
         self.ram_net = RAMNet(args)
 
-        self.name = 'ram_{}_{}x{}_{}_{}'.format(args.num_glimpses, args.patch_size, args.patch_size, args.glimpse_scale, args.num_patches)
+        self.name = '{}_{}_{}x{}_{}_{}'.format(args.model, args.num_glimpses, args.patch_size, args.patch_size, args.glimpse_scale, args.num_patches)
 
     def init_loc(self, batch_size):
         dtype = torch.cuda.FloatTensor if self.use_gpu else torch.FloatTensor
@@ -54,7 +57,8 @@ class RecurrentAttention(nn.Module):
         preds = torch.max(log_probas, 1)[1]
         reward = (preds.detach() == y).float()
         loss_pred = F.nll_loss(log_probas, y)
-
+        # print(x.size(), preds, y, locs)
+        # assert False
         # Baseline Loss
         # reward:          (batch, num_glimpses)
         reward = reward.unsqueeze(1).repeat(1, self.num_glimpses)
@@ -79,7 +83,9 @@ class RecurrentAttention(nn.Module):
         return {'loss': loss,
                 'acc': acc,
                 'locs': locs,
-                'x': x}
+                'x': x,
+                'preds': preds,
+                'y': y}
 
     def forward_test(self, x, y):
         # duplicate 10 times
@@ -110,6 +116,7 @@ class RecurrentAttention(nn.Module):
         preds = torch.max(log_probas, 1)[1]
         reward = (preds.detach() == y).float()
         loss_pred = F.nll_loss(log_probas, y)
+        # confusion_meter.add(preds.data.view(-1),y.data.view(-1))
 
         # Baseline Loss
         # reward:          (batch, num_glimpses)
@@ -132,5 +139,7 @@ class RecurrentAttention(nn.Module):
         correct = (preds == y).float()
         acc = 100 * (correct.sum() / len(y))
 
+        # return {'loss': loss,
+        #         'acc': acc},confusion_meter
         return {'loss': loss,
                 'acc': acc}

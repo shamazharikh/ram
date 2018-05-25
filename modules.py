@@ -112,23 +112,35 @@ class ConvNet(nn.Module):
 
 class PreTrainedNet(nn.Module):
     def __init__(self, num_channel, hidden_g, net='resnet18'):
+        """
+num channel ==  equivalent to num of scales times num_channels 
+hidden_g    ==  number neurons in the mlp    
+network     ==  type of pre-trained network to be used
+"""
         super(PreTrainedNet, self).__init__()
-        data = Variable(torch.rand(2,3,32,32))
-        self.bn1 = nn.BatchNorm2d(num_channel)
-        self.conv1 = nn.Conv2d(num_channel, 3, kernel_size=3, padding=1)
+        data = Variable(torch.rand(2,num_channel,32,32))
         if 'resnet' in net:
+            self.conv1 = nn.Conv2d(num_channel, 64, kernel_size=3, padding=1)
+            self.bn1 = nn.BatchNorm2d(64)
             model = getattr(models, net)(pretrained=True)
-            self.feature = nn.Sequential(*list(model.children())[:-3])
+            self.feature = nn.Sequential(*list(model.children())[3:-2])           
         if 'densenet' in net:
+            if '161' in net:
+                self.conv1 = nn.Conv2d(num_channel, 96, kernel_size=3, padding=1)
+                self.bn1 = nn.BatchNorm2d(96)
+            else:
+                self.conv1 = nn.Conv2d(num_channel, 64, kernel_size=3, padding=1)
+                self.bn1 = nn.BatchNorm2d(64)
             model = getattr(models, net)(pretrained=True)
-            self.feature = nn.Sequential(*list(model.features.children())[:-3])
-        self.pooler = nn.AvgPool2d(2)
-        out = self.pooler(self.feature(data))
+            self.feature = nn.Sequential(*list(model.features.children())[3:])              
+        
+        self.pooler = nn.AdaptiveAvgPool2d((1,1))
+        out = self.pooler(self.feature(self.conv1(data)))
         shape = out.size()[1]
         self.fc = nn.Linear(shape, hidden_g)
         self.bnfc = nn.BatchNorm1d(shape)
     def forward(self, x):
-        x = F.relu(self.conv1(self.bn1(x)))
+        x = F.relu(self.bn1(self.conv1(x)))
         x = self.feature(x)
         x = self.pooler(x)
         shape = x.size()[1]
@@ -156,7 +168,7 @@ class GlimpseNet(nn.Module):
             if model == 'vanilla':
                 self.fc1 = ConvNet(num_channel*num_patches, hidden_g)
             else:
-                self.fc1 = PreTrainedNet(num_channel*num_patches, hidden_g, net=model)
+                self.fc1 = PreTrainedNet(num_channel*num_patches, hidden_g, net=model) 
         else:
             D_in = num_patches*patch_size*patch_size*num_channel
             self.fc1 = nn.Linear(D_in, hidden_g)

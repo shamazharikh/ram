@@ -14,21 +14,26 @@ def parse_arguments():
                      help="path to directory containing pickle dumps")
     arg.add_argument("--epoch", type=int, default=111,
                      help="epoch of desired plot")
+    arg.add_argument("--name", type=str, default='plots', help='Name of the plots')
     args = vars(arg.parse_args())
-    return args['plot_dir'], args['epoch']
+    return args['plot_dir'], args['epoch'], args['name']
 
 
-def main(plot_dir, epoch):
+def main(plot_dir, epoch, name):
 
     # read in pickle files
-    with open(os.path.join(plot_dir, "g_{}.p".format(epoch)), "rb") as f:
+    with open(os.path.join(plot_dir, "{}g_{}.p".format(name, epoch)), "rb") as f:
         glimpses = pickle.load(f)
 
-    with open(os.path.join(plot_dir, "l_{}.p".format(epoch)), "rb") as f:
+    with open(os.path.join(plot_dir, "{}l_{}.p".format(name, epoch)), "rb") as f:
         locations = pickle.load(f)
 
-    # print(glimpses.shape, locations)
-    # assert False
+    with open(os.path.join(plot_dir, "{}Ys_{}.p".format(name, epoch)), "rb") as f:
+        labels = pickle.load(f)
+
+    with open(os.path.join(plot_dir, "{}preds_{}.p".format(name, epoch)), "rb") as f:
+        predictions = pickle.load(f)
+
     # grab useful params
     patch_size = int(plot_dir.split('_')[2][0])
     num_glimpses = len(locations)
@@ -38,12 +43,13 @@ def main(plot_dir, epoch):
     # denormalize coordinates
     coords = [0.5 * ((l+1.0) * img_shape) for l in locations]
 
-    fig, axs = plt.subplots(nrows=1, ncols=num_imgs)
+    fig, axs = plt.subplots(nrows=3, ncols=num_imgs//3, figsize=(8,8))
     # fig.set_dpi(100)
 
     # plot base image
     for j, ax in enumerate(axs.flat):
-        ax.imshow(glimpses[j], cmap="Greys_r")
+        ax.imshow(glimpses[j][0],cmap='gray')
+        ax.set_title('Label:{} Pred:{}'.format(labels[j], predictions[j]))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -63,7 +69,7 @@ def main(plot_dir, epoch):
 
     # animate
     anim = animation.FuncAnimation(
-        fig, updateData, frames=num_glimpses, interval=500, repeat=True
+        fig, updateData, frames=num_glimpses, interval=500, repeat=False
     )
 
     # save as mp4

@@ -1,6 +1,10 @@
+
 from tqdm import tqdm
 from utils import AverageMeter
 import logging
+import torchnet as tnt
+nclasses=3
+confusion_meter = tnt.meter.ConfusionMeter(nclasses, normalized=True)
 
 logger = logging.getLogger('RAM')
 
@@ -83,10 +87,23 @@ class Trainer(object):
         accs = AverageMeter()
         self.model.eval()
         for i, (x, y) in enumerate(tqdm(test_loader, unit='batch')):
-            metric = self.model.forward(x, y)
+            # metric = self.model.forward(x, y, is_training=False)
+            # metric,confusion_meter = self.model.forward(x, y, is_training=False)
+            metric = self.model.forward(x, y, is_training=False)
             acc = metric['acc']
+
             # print(dir(acc))
             # assert False
             accs.update(acc.data[0], x.size()[0])
+
+            # for cbk in callbacks:
+            #     cbk.on_batch_end(epoch, i, logs=metric)
         # print(accs)
+        # print (confusion_meter.conf)
         logger.info('Test Acc: ({:.2f}%)'.format(accs.avg))
+
+    def plot(self, data_loader, PlotCallback, name):
+        self.model.eval()
+        x, y = next(iter(data_loader))
+        metric = self.model.forward(x, y, is_training=True)
+        PlotCallback.on_batch_end(0,0, name=name, logs=metric)

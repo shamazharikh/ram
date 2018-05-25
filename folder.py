@@ -105,6 +105,8 @@ class ImageFolder(data.Dataset):
         self.root = root
         self.imgs = imgs
         self.classes = classes
+        self.num_class = len(classes)
+        self.num_channels = 3
         self.class_to_idx = class_to_idx
         self.transform = transform
         self.target_transform = target_transform
