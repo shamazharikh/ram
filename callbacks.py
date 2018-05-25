@@ -36,7 +36,9 @@ class PlotCbk(Callback):
         self.num_imgs = num_imgs
         self.plot_freq = plot_freq
         self.use_gpu = use_gpu
-        self.plot_dir = os.path.join(plot_dir, self.model.name, '/')
+        self.plot_dir = os.path.join(plot_dir, self.model.name+'/')
+        # print (self.plot_dir)
+        # print ('###################################')
         if not os.path.exists(self.plot_dir):
             os.makedirs(self.plot_dir)
 

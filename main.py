@@ -208,6 +208,7 @@ if __name__ == '__main__':
 		sum([p.data.nelement() for p in model.parameters()])))
 	trainer = Trainer(model, optimizer, watch=['acc'], val_watch=['acc'])
 
+
 	if args.is_train:
 		logger.info("Train on {} samples, validate on {} samples".format(len(train_loader.dataset), len(val_loader.dataset)))
 		start_epoch = 0
