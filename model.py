@@ -116,7 +116,7 @@ class RecurrentAttention(nn.Module):
         preds = torch.max(log_probas, 1)[1]
         reward = (preds.detach() == y).float()
         loss_pred = F.nll_loss(log_probas, y)
-        # confusion_meter.add(preds.data.view(-1),y.data.view(-1))
+        confusion_meter.add(preds.data.view(-1),y.data.view(-1))
 
         # Baseline Loss
         # reward:          (batch, num_glimpses)
@@ -139,7 +139,8 @@ class RecurrentAttention(nn.Module):
         correct = (preds == y).float()
         acc = 100 * (correct.sum() / len(y))
 
-        # return {'loss': loss,
-        #         'acc': acc},confusion_meter
         return {'loss': loss,
-                'acc': acc}
+                'acc': acc,
+                'con_mat':confusion_meter}
+        # return {'loss': loss,
+        #         'acc': acc}

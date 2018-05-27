@@ -1,27 +1,27 @@
 # running on bmi
 # export CUDA_VISIBLE_DEVICES=0
-python main.py --ckpt_dir=./ckpt/study1/resnet18_model --patch_size=32 --num_patches=1 --conv=True --model=resnet18 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo resnet18 completed
-python main.py --ckpt_dir=./ckpt/study1/resnet18_model --patch_size=32 --num_patches=2 --conv=True --model=resnet18 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1 
-echo resnet18 completed
-python main.py --ckpt_dir=./ckpt/study1/resnet34_model --patch_size=32 --num_patches=1 --conv=True --model=resnet34 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo resnet34 completed
-python main.py --ckpt_dir=./ckpt/study1/resnet34_model --patch_size=32 --num_patches=2 --conv=True --model=resnet34 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo resnet34 completed
-python main.py --ckpt_dir=./ckpt/study1/resnet50_model --patch_size=32 --num_patches=1 --conv=True --model=resnet50 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo resnet50 completed
-python main.py --ckpt_dir=./ckpt/study1/resnet50_model --patch_size=32 --num_patches=2 --conv=True --model=resnet50 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo resnet50 completed
-python main.py --ckpt_dir=./ckpt/study1/resnet101_model --patch_size=32 --num_patches=1 --conv=True --model=resnet101 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo resnet101 completed
-python main.py --ckpt_dir=./ckpt/study1/resnet101_model --patch_size=32 --num_patches=2 --conv=True --model=resnet101 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo resnet101 completed
-python main.py --ckpt_dir=./ckpt/study1/resnet152_model --patch_size=32 --num_patches=1 --conv=True --model=resnet152 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo resnet152 completed
-python main.py --ckpt_dir=./ckpt/study1/resnet152_model --patch_size=32 --num_patches=2 --conv=True --model=resnet152 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo resnet152 completed
-python main.py --ckpt_dir=./ckpt/study1/densenet121_model --patch_size=32 --num_patches=1 --conv=True --model=densenet121 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
-echo densenet121 completed
+# python main.py --ckpt_dir=./ckpt/study1/resnet18_model --patch_size=32 --num_patches=1 --conv=True --model=resnet18 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
+# echo resnet18 completed
+# python main.py --ckpt_dir=./ckpt/study1/resnet18_model --patch_size=32 --num_patches=2 --conv=True --model=resnet18 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1 
+# echo resnet18 completed
+# python main.py --ckpt_dir=./ckpt/study1/resnet34_model --patch_size=32 --num_patches=1 --conv=True --model=resnet34 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
+# echo resnet34 completed
+# python main.py --ckpt_dir=./ckpt/study1/resnet34_model --patch_size=32 --num_patches=2 --conv=True --model=resnet34 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
+# echo resnet34 completed
+# python main.py --ckpt_dir=./ckpt/study1_repeat/resnet50_model --patch_size=32 --num_patches=1 --conv=True --model=resnet50 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1_repeat
+# echo resnet50 completed
+# python main.py --ckpt_dir=./ckpt/study1_repeat/resnet50_model --patch_size=32 --num_patches=2 --conv=True --model=resnet50 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1_repeat
+# echo resnet50 completed
+# python main.py --ckpt_dir=./ckpt/study1/resnet101_model --patch_size=32 --num_patches=1 --conv=True --model=resnet101 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
+# echo resnet101 completed
+# python main.py --ckpt_dir=./ckpt/study1/resnet101_model --patch_size=32 --num_patches=2 --conv=True --model=resnet101 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
+# echo resnet101 completed
+# python main.py --ckpt_dir=./ckpt/study1/resnet152_model --patch_size=32 --num_patches=1 --conv=True --model=resnet152 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
+# echo resnet152 completed
+# python main.py --ckpt_dir=./ckpt/study1/resnet152_model --patch_size=32 --num_patches=2 --conv=True --model=resnet152 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
+# echo resnet152 completed
+# python main.py --ckpt_dir=./ckpt/study1/densenet121_model --patch_size=32 --num_patches=1 --conv=True --model=densenet121 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
+# echo densenet121 completed
 python main.py --ckpt_dir=./ckpt/study1/densenet121_model --patch_size=32 --num_patches=2 --conv=True --model=densenet121 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1
 echo densenet121 completed
 python main.py --ckpt_dir=./ckpt/study1/densenet169_model --patch_size=32 --num_patches=1 --conv=True --model=densenet169 --epoch=25 --device=0 --data_dir=./../data/slices --plot_dir=./plots/study1

@@ -35,7 +35,10 @@ def main(plot_dir, epoch, name):
         predictions = pickle.load(f)
 
     # grab useful params
-    patch_size = int(plot_dir.split('_')[2][0])
+    patch_size = int(plot_dir.split('_')[2].split('x')[0])
+    glimpse_scale = int(plot_dir.split('_')[3])
+    num_patches = int(plot_dir.split('_')[4][0])
+    print(patch_size)
     num_glimpses = len(locations)
     num_imgs = glimpses.shape[0]
     img_shape = np.asarray([glimpses[0].shape[1:]])
@@ -52,20 +55,25 @@ def main(plot_dir, epoch, name):
         ax.set_title('Label:{} Pred:{}'.format(labels[j], predictions[j]))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-
+    # color = np.random.rand(num_glimpses, 3)
     def updateData(i):
-        color = 'r'
+        color = ['r', 'b', 'g', 'c', 'm', 'y']
         co = coords[i]
         for j, ax in enumerate(axs.flat):
+            # print(len(list(ax.patches)))
+            # for k, p in enumerate(ax.patches):
+            #     # print(k)
+            #     p.remove()
 
-            for p in ax.patches:
-                p.remove()
+            # print(len(list(ax.patches)))
             c = co[j]
             # print(j, c)
-            rect = bounding_box(
-                c[0], c[1], patch_size, color
-            )
-            ax.add_patch(rect)
+            for l in range(num_patches):
+
+                rect = bounding_box(
+                    c[0], c[1], patch_size*(glimpse_scale**l), color[i]
+                    )
+                ax.add_patch(rect)
 
     # animate
     anim = animation.FuncAnimation(

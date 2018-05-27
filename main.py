@@ -104,36 +104,36 @@ if __name__ == '__main__':
 
 #### 
 
-	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+	# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-	print('__Python VERSION:', sys.version)
-	print('__pyTorch VERSION:', torch.__version__)
-	print('__CUDA VERSION')
-
-
-	print('__CUDNN VERSION:', torch.backends.cudnn.version())
-	print('__Number CUDA Devices:', torch.cuda.device_count())
-	print('__Devices')
-	# call(["nvidia-smi", "--format=csv", "--query-gpu=index,name,driver_version,memory.total,memory.used,memory.free"])
-	print('Active CUDA Device: GPU', torch.cuda.current_device())
-
-	print ('Available devices ', torch.cuda.device_count())
-	print ('Current cuda device ', torch.cuda.current_device())
+	# print('__Python VERSION:', sys.version)
+	# print('__pyTorch VERSION:', torch.__version__)
+	# print('__CUDA VERSION')
 
 
-	manualSeed = 2222
-	def fixSeed(seed):
-		random.seed(seed)
-		np.random.seed(seed)
-		torch.manual_seed(seed)
-		if device.type=='cuda':
-			torch.cuda.manual_seed(seed)
-			torch.cuda.manual_seed_all(seed)
+	# print('__CUDNN VERSION:', torch.backends.cudnn.version())
+	# print('__Number CUDA Devices:', torch.cuda.device_count())
+	# print('__Devices')
+	# # call(["nvidia-smi", "--format=csv", "--query-gpu=index,name,driver_version,memory.total,memory.used,memory.free"])
+	# print('Active CUDA Device: GPU', torch.cuda.current_device())
+
+	# print ('Available devices ', torch.cuda.device_count())
+	# print ('Current cuda device ', torch.cuda.current_device())
 
 
-	if manualSeed is None:
-			manualSeed = 999
-	fixSeed(manualSeed)
+	# manualSeed = 2222
+	# def fixSeed(seed):
+	# 	random.seed(seed)
+	# 	np.random.seed(seed)
+	# 	torch.manual_seed(seed)
+	# 	if device.type=='cuda':
+	# 		torch.cuda.manual_seed(seed)
+	# 		torch.cuda.manual_seed_all(seed)
+
+
+	# if manualSeed is None:
+	# 		manualSeed = 999
+	# fixSeed(manualSeed)
 
 #### above lines added by varghese to stabilies randomness
 
@@ -231,7 +231,7 @@ if __name__ == '__main__':
 		loader = get_test_loader(dataset, args.num_plots, **kwargs)
 		logger.info("Plotting a random batch from the folder {}".format(args.mode))
 		start_epoch = load_checkpoint(args.ckpt_dir, model, False, best=True)
-		trainer.plot(loader, PlotCbk(model, args.num_plots, 1, args.use_gpu), args.plot_name)
+		trainer.plot(loader, PlotCbk(args.plot_dir, model, args.num_plots, 1, args.use_gpu), args.plot_name)
 	else:
 		logger.info("Test on {} samples".format((len(test_loader))))
 		print(args.ckpt_dir)

@@ -2,9 +2,9 @@
 from tqdm import tqdm
 from utils import AverageMeter
 import logging
-import torchnet as tnt
-nclasses=3
-confusion_meter = tnt.meter.ConfusionMeter(nclasses, normalized=True)
+# import torchnet as tnt
+# nclasses=3
+# confusion_meter = tnt.meter.ConfusionMeter(nclasses, normalized=True)
 
 logger = logging.getLogger('RAM')
 
@@ -91,7 +91,7 @@ class Trainer(object):
             # metric,confusion_meter = self.model.forward(x, y, is_training=False)
             metric = self.model.forward(x, y, is_training=False)
             acc = metric['acc']
-
+            # confusion_meter = metric['con_mat']  
             # print(dir(acc))
             # assert False
             accs.update(acc.data[0], x.size()[0])
@@ -99,7 +99,8 @@ class Trainer(object):
             # for cbk in callbacks:
             #     cbk.on_batch_end(epoch, i, logs=metric)
         # print(accs)
-        # print (confusion_meter.conf)
+        confusion_meter = metric['con_mat']
+        print (confusion_meter.conf)
         logger.info('Test Acc: ({:.2f}%)'.format(accs.avg))
 
     def plot(self, data_loader, PlotCallback, name):
